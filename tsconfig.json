@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "outDir": "./dist",         // 指定输出目录
+    "rootDir": "./src",         // 指定源文件根目录
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*"                 // 包含所有 src 文件
+  ],
+  "exclude": [
+    "node_modules"            // 排除 node_modules 文件夹
+  ]
+}

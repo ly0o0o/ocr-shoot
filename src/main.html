@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小久专属搜题答案展示</title>
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        .swiper-container {
+            width: 100%;
+            height: 600px;
+            margin-top: 30px;
+        }
+        .swiper-slide {
+            background: #ffffff;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+        .swiper-slide:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        .question, .options, .analysis, .answer {
+            margin-bottom: 20px;
+        }
+        h3 {
+            color: #3498db;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        p, ul {
+            margin: 0;
+            padding: 0 0 0 20px;
+        }
+        ul {
+            list-style-type: none;
+        }
+        li {
+            margin-bottom: 8px;
+            position: relative;
+        }
+        li:before {
+            content: '•';
+            color: #3498db;
+            font-weight: bold;
+            position: absolute;
+            left: -15px;
+        }
+        .swiper-button-next, .swiper-button-prev {
+            color: #3498db;
+        }
+        .swiper-pagination-bullet-active {
+            background: #3498db;
+        }
+        .queue-info {
+            text-align: center;
+            font-size: 1.2em;
+            margin: 20px 0;
+            color: #7f8c8d;
+        }
+        button {
+            background-color: #3498db;
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            font-size: 16px;
+            margin: 20px auto;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* 自定义滚动条 */
+        .swiper-slide::-webkit-scrollbar {
+            width: 8px;
+        }
+        .swiper-slide::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .swiper-slide::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .swiper-slide::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>小久专属ocr搜题答案页</h1>
+    <button onclick="fetchQuestionData()">刷新题目</button>
+    <div class="queue-info">当前队列长度: <span id="queueLength">0</span></div>
+    <div class="swiper-container">
+        <div class="swiper-wrapper" id="questionDisplay">
+            <div class="swiper-slide" id="loadingSlide">
+                <div class="loader"></div>
+            </div>
+        </div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-pagination"></div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+<script>
+    let swiper;
+    const existingQuestionIds = new Set();
+
+    $(document).ready(function() {
+        swiper = new Swiper('.swiper-container', {
+            loop: false,
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            effect: 'coverflow',
+            coverflowEffect: {
+                rotate: 50,
+                stretch: 0,
+                depth: 100,
+                modifier: 1,
+                slideShadows: true,
+            },
+            centeredSlides: true,
+            slidesPerView: 'auto',
+            spaceBetween: 30,
+        });
+
+        // 首次加载页面时，隐藏加载圈，直接检查数据
+        fetchQuestionData(true); // 加载时直接调用, true 表示首次加载
+        setInterval(fetchQuestionData, 5000);  // 每5秒刷新一次数据
+    });
+
+    // 修改 fetchQuestionData 函数
+    function fetchQuestionData(initialLoad = false) {
+        $.ajax({
+            url: 'http://localhost:3000/api/all-questions',
+            method: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                if (Array.isArray(data)) {
+                    $('#queueLength').text(data.length);
+
+                    // 没有新数据时，不需要刷新
+                    if (data.length === 0 || !isNewData(data)) {
+                        return;
+                    }
+
+                    // 新的 slide 数组
+                    const newSlides = [];
+                    data.forEach(question => {
+                        if (!existingQuestionIds.has(question.id)) {
+                            existingQuestionIds.add(question.id);
+                            const slideHtml = createSlideHtml(question);
+                            newSlides.push(slideHtml);
+                        }
+                    });
+
+                    if (newSlides.length > 0) {
+                        swiper.appendSlide(newSlides);
+                        swiper.update();  // 仅更新新增的 slide
+                        swiper.slideTo(swiper.slides.length - 1); // 自动跳到最新的一题
+                    }
+
+                    // 如果是首次加载，并且有数据，隐藏加载动画
+                    if (initialLoad && data.length > 0) {
+                        $('#loadingSlide').remove();
+                        swiper.update();
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching data:', error);
+            }
+        });
+    }
+
+    // Check if new questions exist
+    function isNewData(data) {
+        return data.some(question => !existingQuestionIds.has(question.id));
+    }
+
+    // Create slide HTML
+    function createSlideHtml(question) {
+        let optionsHtml = '';
+        if (question.options && question.options.length > 0) {
+            optionsHtml = `
+                <div class="options">
+                    <h3>选项</h3>
+                    <ul>
+                        ${question.options.map(option => `<li>${escapeHtml(option)}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="swiper-slide">
+                <div class="question">
+                    <h3>题目</h3>
+                    <p>${escapeHtml(question.question)}</p>
+                </div>
+                ${optionsHtml}
+                <div class="analysis">
+                    <h3>解析</h3>
+                    <p>${escapeHtml(question.analysis)}</p>
+                </div>
+                <div class="answer">
+                    <h3>答案</h3>
+                    <p>${escapeHtml(question.answer)}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text.replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
+</body>
+</html>

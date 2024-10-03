@@ -1,0 +1,46 @@
+{
+  "name": "ocr3",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "bin": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "npx ts-node src/index.ts"
+  },
+  "pkg": {
+    "targets": [
+      "node16-macos-x64",
+      "node16-linux-x64",
+      "node16-win-x64"
+    ],
+    "assets": [
+      "src/**/*",
+      "node_modules/openai/**/*",
+      "node_modules/tesseract.js/**/*"
+    ]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "https-proxy-agent": "^7.0.5",
+    "jimp": "^1.6.0",
+    "lodash.debounce": "^4.0.8",
+    "openai": "^4.67.1",
+    "tesseract.js": "^5.1.1"
+  },
+  "devDependencies": {
+    "@types/lodash.debounce": "^4.0.9",
+    "@types/node": "^22.7.4",
+    "concurrently": "^9.0.1",
+    "typescript": "^4.9.5",
+    "wait-on": "^8.0.1"
+  }
+}
