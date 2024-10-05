@@ -1,5 +1,6 @@
 import { openai, openaiShort } from './openConfig';
 import { QuestionPrompt, QuestionResult } from '../types/question.type';
+import {randomUUID} from "node:crypto";
 
 export const analyzeQuestion = async (questionPrompt: QuestionPrompt): Promise<QuestionResult> => {
     const systemPrompt = `
@@ -83,18 +84,22 @@ export const analyzeQuestion = async (questionPrompt: QuestionPrompt): Promise<Q
     // 根据问题类型返回适当的结果
     if (response.questionType === 'multipleChoice') {
         return {
+            id: randomUUID(),
             questionType: 'multipleChoice',
             question: response.question,
             options: response.options,
             analysis: response.analysis,
             answer: response.answer,
+            status: 'unanswered'
         } as QuestionResult;
     } else {
         return {
+            id: randomUUID(),
             questionType: response.questionType,
             question: response.question,
             analysis: response.analysis,
             answer: response.answer,
+            status: 'unanswered'
         } as QuestionResult;
     }
 };

@@ -1,4 +1,4 @@
-const { OpenAI } = require('openai');
+import OpenAI from 'openai'
 import { HttpsProxyAgent } from 'https-proxy-agent'
 import { OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_PROXY_URL } from '../env/env'
 
